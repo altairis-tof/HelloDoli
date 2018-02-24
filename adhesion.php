@@ -1,4 +1,9 @@
 <?php
+
+  // Inclusion du client REST
+  include('./httpful.phar');
+  include('./helloasso.conf');
+
   if(isset($_POST['id'])
   AND isset($_POST['date'])
   AND isset($_POST['amount'])
@@ -6,12 +11,16 @@
   AND isset($_POST['payer_first_name'])
   AND isset($_POST['payer_last_name'])
   AND isset($_POST['url_receipt'])
-  AND isset($_POST['url_tax_receipt']))
+  AND isset($_POST['url_tax_receipt'])
+  AND intval($_POST['id'],10))
   {
+    updatelog("Nouveau paiment reçu.".PHP_EOL.print_r($_POST,true));
 
+    /* Recherche des détails de l'action liée au paiment */
+    $response = \Httpful\Request::get($helloAssoAPIUrl."payments/".$_POST['id'].".json")->authenticateWith($helloAssoUsername, $helloAssoAPIPassword)->send();
+    echo $response;
   }
   else {
-    echo PHP_VERSION;
     updatelog('Page appelée avec de mauvais paramètres.');
   }
 
