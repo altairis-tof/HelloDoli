@@ -5,6 +5,11 @@
   include('./config.php');
   include('./db.php');
 
+  updatelog("********************************************************");
+  updatelog(date("d/m/y H:i"));
+
+
+
   if(isset($_POST['id'])
   AND isset($_POST['date'])
   AND isset($_POST['amount'])
@@ -17,7 +22,7 @@
   {
     // TODO: vérifier que la notification correspond bien à une nouvelle adhésion (utiliser le campaignId ?)
 
-    updatelog("Nouveau paiment reçu.".PHP_EOL.print_r($_POST,true));
+    updatelog("Nouveau paiement reçu.".PHP_EOL.print_r($_POST,true));
 
     /* Vérification de l'existence de la notification en BDD */
     $response = $bdd->query('SELECT COUNT(*) FROM payments_notifications WHERE id='.intval($_POST['id'],10));
@@ -39,13 +44,15 @@
         $member['email'] = $response->body->email;
         // TODO: stocker toutes les infos nécessaires.
 
-        echo "<pre>";
-        print_r($member);
-        echo "</pre>";
+        updatelog(print_r($response->body, TRUE));
         // TODO: Faire le traitement Dolibarr
 
         /* Enregistrement de l'ID du paiement en BDD. */
-        $bdd->exec('INSERT INTO payments_notifications(id) VALUES('.intval($_POST['id'],10).')');
+        try {
+          $bdd->exec('INSERT INTO payments_notifications(id) VALUES('.intval($_POST['id'],10).')');
+        } catch (\Exception $e) {
+          updatelog("Erreur lors de l'enregistrement de la notification en BDD.".PHP_EOL."Eception :".$e->getMessage());
+        }
       }
     }
     else {
@@ -55,16 +62,15 @@
   else {
     updatelog('Page appelée avec de mauvais paramètres.');
   }
+  updatelog("********************************************************");
+  updatelog(PHP_EOL);
 
   function updatelog($str)
   {
     if(is_string($str))
     {
       $logFile = fopen('adhesions.log', 'a');
-
-      fputs($logFile, "**************************************************".PHP_EOL);
-      fputs($logFile, date("d/m/y H:i").PHP_EOL);
-      fputs($logFile, $str.PHP_EOL.PHP_EOL);
+      fputs($logFile, $str.PHP_EOL);
 
       fclose($logFile);
     }
