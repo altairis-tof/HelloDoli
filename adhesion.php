@@ -16,9 +16,16 @@
   {
     updatelog("Nouveau paiment reçu.".PHP_EOL.print_r($_POST,true));
 
-    /* Recherche des détails de l'action liée au paiment */
+    /* Recherche des détails du paiement via reqûete API HelloAsso */
     $response = \Httpful\Request::get($helloAssoAPIUrl."payments/".$_POST['id'].".json")->authenticateWith($helloAssoUsername, $helloAssoAPIPassword)->send();
-    echo $response;
+    $actions = $response->body->actions;
+    echo "<pre>";
+    print_r($response);
+    echo "</pre>";
+    print_r($actions);
+
+
+
   }
   else {
     updatelog('Page appelée avec de mauvais paramètres.');
