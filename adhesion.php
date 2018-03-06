@@ -69,7 +69,7 @@
   {
     if(is_string($str))
     {
-      $logFile = fopen('adhesions.log', 'a');
+      $logFile = fopen('/var/log/hellodoli/adhesions.log', 'a');
       fputs($logFile, $str.PHP_EOL);
 
       fclose($logFile);
