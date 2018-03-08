@@ -53,6 +53,23 @@ if ($notificationExists == 0) {
     $member['lastname'] = $response->body->last_name;
     $member['firstname'] = $response->body->first_name;
     $member['email'] = $response->body->email;
+    $member['morphy'] = "phy";
+    $member['address'] = $response->body->custom_infos[2]->value;
+    $member['zip'] = $response->body->custom_infos[6]->value;
+    $member['town'] = "kikoo";
+    $member['phone_perso'] = $response->body->address;
+    $member['phone'] = null;
+    $member['public'] = 0;
+    $member['statut'] = 1;
+    $member['photo'] = null;
+    $member['datec'] = "";
+    $member['datefin'] = 1511390014;
+    $member['datevalid'] = "";
+    $member['birth'] = 638575200;
+    $member['typeid'] = 2;
+    $member['type'] = "Actif";
+    $member['need_subscription'] = 1;
+
 // TODO: stocker toutes les infos nécessaires.
     
     $response = \Httpful\Request::post($dolibarrAPIUrl. "members")
