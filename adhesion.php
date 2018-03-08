@@ -12,7 +12,7 @@ updatelog(date("d/m/y H:i"));
 $notification['id'] = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 $notification['date'] = filter_input(INPUT_POST, 'date');
 $notification['amount'] = filter_input(INPUT_POST, 'amount');
-str_replace(',', '.', $notification['amount']);
+$notification['amount'] = str_replace(',', '.', $notification['amount']);
 $notification['url'] = filter_input(INPUT_POST, 'url', FILTER_VALIDATE_URL);
 $notification['payer_first_name'] = filter_input(INPUT_POST, 'payer_first_name');
 $notification['payer_last_name'] = filter_input(INPUT_POST, 'payer_last_name');
