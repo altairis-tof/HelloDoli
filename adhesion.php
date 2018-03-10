@@ -53,7 +53,7 @@ if ($notificationExists == 0) {
     $paymentID = $response->body->id_payment;
     
     $member['lastname'] = mb_strtoupper($response->body->last_name);
-    $member['firstname'] = $response->body->first_name;
+    $member['firstname'] = ucwords($response->body->first_name,'-');
     $member['email'] = $response->body->email;
     $member['morphy'] = "phy";
     $member['address'] = $response->body->address;
