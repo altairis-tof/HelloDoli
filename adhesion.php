@@ -42,13 +42,15 @@ $response->closeCursor();
 
 if ($notificationExists == 0) {
     /* Recherche des détails du paiement via reqûete API HelloAsso */
-    $id = str_pad($notification['id'], 11, '0', STR_PAD_LEFT);
-    $id .= '3'; //un '3' n'est pas présent dans la notification HelloAsso mais
-    $response = \Httpful\Request::get($helloAssoAPIUrl . "actions/" . $id . ".json")
+    $actionID = str_pad($notification['id'], 11, '0', STR_PAD_LEFT);
+    $actionID .= '3'; //un '3' n'est pas présent dans la notification HelloAsso mais
+    $response = \Httpful\Request::get($helloAssoAPIUrl . "actions/" . $actionID . ".json")
             ->authenticateWith($helloAssoUsername, $helloAssoAPIPassword)
             ->expectsJson()
             ->send();
     updatelog(print_r($response->body, TRUE));
+    
+    $paymentID = $response->body->id_payment;
     
     $member['lastname'] = $response->body->last_name;
     $member['firstname'] = $response->body->first_name;
@@ -56,7 +58,7 @@ if ($notificationExists == 0) {
     $member['morphy'] = "phy";
     $member['address'] = $response->body->custom_infos[2]->value;
     $member['zip'] = $response->body->custom_infos[6]->value;
-    $member['town'] = "kikoo";
+    $member['town'] = $response->body->city;
     $member['phone_perso'] = $response->body->address;
     $member['phone'] = null;
     $member['public'] = 0;
@@ -69,6 +71,13 @@ if ($notificationExists == 0) {
     $member['typeid'] = 2;
     $member['type'] = "Actif";
     $member['need_subscription'] = 1;
+    
+    // Récupération des détails du paiement
+    $response = \Httpful\Request::get($helloAssoAPIUrl . "payments/" . $paymentID . ".json")
+            ->authenticateWith($helloAssoUsername, $helloAssoAPIPassword)
+            ->expectsJson()
+            ->send();
+    updatelog(print_r($response->body, TRUE));
 
 // TODO: stocker toutes les infos nécessaires.
     
@@ -77,7 +86,7 @@ if ($notificationExists == 0) {
             ->sendsJson()
             ->body(json_encode($member))
             ->send();
-    print_r($response);
+    print_r($response->body);
             
     
 // TODO: Faire le traitement Dolibarr
