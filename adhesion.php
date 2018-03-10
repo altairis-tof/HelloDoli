@@ -52,24 +52,32 @@ if ($notificationExists == 0) {
     
     $paymentID = $response->body->id_payment;
     
-    $member['lastname'] = $response->body->last_name;
+    $member['lastname'] = mb_strtoupper($response->body->last_name);
     $member['firstname'] = $response->body->first_name;
     $member['email'] = $response->body->email;
     $member['morphy'] = "phy";
-    $member['address'] = $response->body->custom_infos[2]->value;
+    $member['address'] = $response->body->address;
     $member['zip'] = $response->body->custom_infos[6]->value;
     $member['town'] = $response->body->city;
-    $member['phone_perso'] = $response->body->address;
+    $member['phone_perso'] = $response->body->custom_infos[0]->value;
+    switch($response->body->custom_infos[7]->value)
+    {
+        case 'Homme':
+            $member['civility_id'] = 'MR';
+                break;
+        case 'Femme':
+            $member['civility_id'] = 'MME';            
+    }
     $member['phone'] = null;
     $member['public'] = 0;
-    $member['statut'] = 1;
+    $member['statut'] = 0; // brouillon
     $member['photo'] = null;
     $member['datec'] = "";
     $member['datefin'] = 1511390014;
     $member['datevalid'] = "";
     $member['birth'] = 638575200;
-    $member['typeid'] = 2;
-    $member['type'] = "Actif";
+    $member['typeid'] = $response->body->custom_infos[3]->value=='Oui'?2:3;
+    //$member['type'] = $response->body->custom_infos[];
     $member['need_subscription'] = 1;
     
     // Récupération des détails du paiement
@@ -78,19 +86,14 @@ if ($notificationExists == 0) {
             ->expectsJson()
             ->send();
     updatelog(print_r($response->body, TRUE));
-
-// TODO: stocker toutes les infos nécessaires.
     
+    // Envoi des données à l'API Dolibarr
     $response = \Httpful\Request::post($dolibarrAPIUrl. "members")
             ->addHeader('DOLAPIKEY', $dolibarrToken)
             ->sendsJson()
             ->body(json_encode($member))
             ->send();
-    print_r($response->body);
-            
-    
-// TODO: Faire le traitement Dolibarr
-    
+    updatelog(print_r($response->body), TRUE);    
 
     /* Enregistrement de l'ID du paiement en BDD. */
     try {
