@@ -102,12 +102,17 @@ if (!$notificationExists == 0)
         }   
     }
     $member['public'] = 0;
-    $member['statut'] = -1; // brouillon
+    $member['statut'] = 1; // adhérent valilde
     $member['photo'] = null;
     $member['datec'] = time(); //date de création
     
     $member['need_subscription'] = 1;
     $member['array_options'] = $options;
+    
+    $subscription['start_date'] = time();
+    $subscription['end_date'] = mktime(0, 0, 0, date("m"),   date("d"),   date("Y")+1);
+    $subscription['amount'] = $response->body->amount;
+    
     
     // Récupération des détails du paiement
     $response = \Httpful\Request::get($helloAssoAPIUrl . "payments/" . $paymentID . ".json")
@@ -116,13 +121,23 @@ if (!$notificationExists == 0)
             ->send();
     updatelog(print_r($response->body, TRUE));
     
-    // Envoi des données à l'API Dolibarr
+    // Création du membre dans Dolibarr (via API)
     $response = \Httpful\Request::post($dolibarrAPIUrl. "members")
             ->addHeader('DOLAPIKEY', $dolibarrToken)
             ->sendsJson()
             ->body(json_encode($member))
             ->send();
-    updatelog(print_r($response->body), TRUE);    
+    updatelog(print_r($response->body), TRUE);  
+    
+    $memberID = $response->body;
+        
+    // Ajout de la cotisation
+    $response = \Httpful\Request::post($dolibarrAPIUrl."members/".$memberID."/subscriptions")
+            ->addHeader('DOLAPIKEY', $dolibarrToken)
+            ->sendsJson()
+            ->body(json_encode($subscription))
+            ->send();
+    updatelog(print_r($response->body), TRUE);  
 
     /* Enregistrement de l'ID du paiement en BDD. */
     try {
