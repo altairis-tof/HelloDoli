@@ -35,7 +35,7 @@ updatelog("Nouveau paiement reçu." . PHP_EOL . print_r($notification, true));
 try {
     $response = $bdd->query('SELECT COUNT(*) FROM payments_notifications WHERE id=' . $notification['id']);
 } catch (\Exception $e) {
-    echo("Erreur lors de la lecture en BDD ." . PHP_EOL . "Exception :" . $e->getMessage());
+    updatelog("Erreur lors de la lecture en BDD ." . PHP_EOL . "Exception :" . $e->getMessage());
 }
 
 $notificationExists = intval($response->fetch()[0], 10);
