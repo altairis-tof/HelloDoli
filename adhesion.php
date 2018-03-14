@@ -5,6 +5,7 @@ include('./httpful.phar');
 include('./config.php');
 include('./db.php');
 include('./functions.php');
+include('./constants.php');
 
 updatelog("********************************************************");
 updatelog(date("d/m/y H:i"));
@@ -40,7 +41,11 @@ try {
 $notificationExists = intval($response->fetch()[0], 10);
 $response->closeCursor();
 
-if ($notificationExists == 0) {
+if (!$notificationExists == 0) 
+{
+    updatelog('Notification déjà traitée.');
+} else {
+    
     /* Recherche des détails du paiement via reqûete API HelloAsso */
     $actionID = str_pad($notification['id'], 11, '0', STR_PAD_LEFT);
     $actionID .= '3'; //un '3' n'est pas présent dans la notification HelloAsso mais
@@ -56,29 +61,53 @@ if ($notificationExists == 0) {
     $member['firstname'] = ucwords($response->body->first_name,'-');
     $member['email'] = $response->body->email;
     $member['morphy'] = "phy";
-    $member['address'] = $response->body->address;
-    $member['zip'] = $response->body->custom_infos[6]->value;
-    $member['town'] = $response->body->city;
-    $member['phone_perso'] = $response->body->custom_infos[0]->value;
-    switch($response->body->custom_infos[7]->value)
-    {
-        case 'Homme':
-            $member['civility_id'] = 'MR';
+    
+    foreach ($response->body->custom_infos as $value) {
+        switch ($value->label){
+            case "Numéro de téléphone":
+                $member['phone_perso'] = $value->value;
                 break;
-        case 'Femme':
-            $member['civility_id'] = 'MME';            
+            case "Adresse contributeur":
+                $member['address'] = $value->value;
+                break;
+            case "Date de naissance":
+                $member['birth'] = strtotime(str_replace('/', '-', $value->value));
+                break;
+            case "Je souhaite devenir un breizhipote actif ? (m'inscrire dans une commission)":
+                $member['typeid'] = $value->value == 'Oui'?2:3;
+                break;
+            case "Je souhaite devenir coopérateur le jour où le supermarché sera ouvert":
+                $options['options_cooperateur'] = $value->value == 'Oui'?1:0; // futur coopérateur
+                break;
+            case "Code Postal contributeur":
+                $member['zip'] = $value->value;
+                break;
+            case "Genre":
+                switch($value->value)
+                {
+                    case 'Homme':
+                        $member['civility_id'] = 'MR';
+                           break;
+                    case 'Femme':
+                        $member['civility_id'] = 'MME';
+                        break;
+                }
+                break;
+            case "Ville":
+                $member['town'] = $value->value;
+                break;
+            case "Groupe de travail souhaité":
+                $options['options_commission'] = $commissions[$value->value];
+                break;      
+        }   
     }
-    $member['phone'] = null;
     $member['public'] = 0;
-    $member['statut'] = 0; // brouillon
+    $member['statut'] = -1; // brouillon
     $member['photo'] = null;
-    $member['datec'] = "";
-    $member['datefin'] = 1511390014;
-    $member['datevalid'] = "";
-    $member['birth'] = 638575200;
-    $member['typeid'] = $response->body->custom_infos[3]->value=='Oui'?2:3;
-    //$member['type'] = $response->body->custom_infos[];
+    $member['datec'] = time(); //date de création
+    
     $member['need_subscription'] = 1;
+    $member['array_options'] = $options;
     
     // Récupération des détails du paiement
     $response = \Httpful\Request::get($helloAssoAPIUrl . "payments/" . $paymentID . ".json")
@@ -101,8 +130,6 @@ if ($notificationExists == 0) {
     } catch (\Exception $e) {
         updatelog("Erreur lors de l'enregistrement de la notification en BDD." . PHP_EOL . "Exception :" . $e->getMessage());
     }
-} else {
-    updatelog('Notification déjà traitée.');
 }
 
 updatelog("********************************************************");
